@@ -24,7 +24,7 @@ using namespace sixtron;
 namespace {
 #define PERIOD_MS      1000
 #define BOARD_VERSION  "v2.1.0"
-#define PROMPT         "\r\n*** Zest Sensor Camera Example ***\r\n"\
+#define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
                        BOARD_VERSION
 #define CRLF           "\r\n> "
@@ -109,7 +109,6 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     }
 
     return res;
-
 }
 
 void jpeg_traitment(int jpeg_index, uint8_t *data)
@@ -139,7 +138,7 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
 
     // print data to serial port
     pc.printf(CRLF);
-    pc.printf("JPEG %d size %ld bytes", jpeg_index, length);
+    pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_index, length);
 
 }
 
