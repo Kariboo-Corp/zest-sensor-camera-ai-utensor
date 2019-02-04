@@ -24,10 +24,11 @@ using namespace sixtron;
 namespace {
 #define PERIOD_MS      1000
 #define BOARD_VERSION  "v2.1.0"
-#define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
+#define PROMPT         "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
                        BOARD_VERSION
 #define CRLF           "\r\n> "
+#define POWER_ON_DELAY 50 // hardware power on delay needed to start camera
 #define CAPTURE_COUNT  5 // capture image count
 #define INTERVAL_TIME  500 // delay between each capture, if bigger than one
 #define FLASH_ENABLE   1 // state of led flash while capture
@@ -146,7 +147,7 @@ void application_setup(void)
 {
     // camera pwer on
     camera_pwr = 1;
-    wait_ms(20);
+    wait_ms(POWER_ON_DELAY);
     // led flash power on
     led_flash.power_on();
     // set user button handler
