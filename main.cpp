@@ -22,7 +22,7 @@
 using namespace sixtron;
 
 namespace {
-#define TIMEOUT_MS     1000
+#define TIMEOUT_MS     1000 // timeout capture sequence in milliseconds
 #define BOARD_VERSION  "v2.1.0"
 #define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
