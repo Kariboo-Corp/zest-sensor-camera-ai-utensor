@@ -29,7 +29,7 @@ namespace {
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
 #define POWER_ON_DELAY 50 // hardware power on delay needed to start camera
-#define CAPTURE_COUNT  5 // capture image count
+#define CAPTURE_COUNT  1 // capture image count
 #define INTERVAL_TIME  500 // delay between each capture, if bigger than one
 #define FLASH_ENABLE   1 // state of led flash while capture
 }
