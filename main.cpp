@@ -22,7 +22,7 @@
 using namespace sixtron;
 
 namespace {
-#define PERIOD_MS      1000
+#define TIMEOUT_MS     1000
 #define BOARD_VERSION  "v2.1.0"
 #define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
@@ -64,7 +64,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     int capture_index = 0;
 
     while (capture_index != capture_count) {
-        timeout_ms = 1000;
+        timeout_ms = TIMEOUT_MS;
         // clear flag frame ready
         camera.set_frame_is_detected(false);
         // setup led flash
