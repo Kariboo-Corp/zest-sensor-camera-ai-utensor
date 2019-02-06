@@ -148,6 +148,7 @@ void application_setup(void)
     // camera pwer on
     camera_pwr = 1;
     wait_ms(POWER_ON_DELAY);
+    camera_reset = 0;
     // led flash power on
     led_flash.power_on();
     // set user button handler
