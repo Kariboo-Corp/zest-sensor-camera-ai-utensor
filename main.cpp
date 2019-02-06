@@ -24,7 +24,7 @@ using namespace sixtron;
 namespace {
 #define PERIOD_MS      1000
 #define BOARD_VERSION  "v2.1.0"
-#define PROMPT         "\r\n*** Zest Sensor Camera Example ***\r\n"\
+#define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
                        BOARD_VERSION
 #define CRLF           "\r\n> "
@@ -188,7 +188,7 @@ void application(void)
 // (note the calls to Thread::wait below for delays)
 int main()
 {
-    pc.printf(PROMPT);
+    pc.printf(START_PROMPT);
 
     //set priority thread application
     thread_application.set_priority(osPriorityHigh);
