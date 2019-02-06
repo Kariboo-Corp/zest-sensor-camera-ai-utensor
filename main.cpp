@@ -164,6 +164,8 @@ void application(void)
     if (camera.iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("omnivision sensor ov5640 initialized");
+        pc.printf(PROMPT);
+        pc.printf("Press button to start snapshot capture...");
     } else {
         pc.printf(PROMPT);
         pc.printf("error: omnivision sensor ov5640 initialization failed");
