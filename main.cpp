@@ -27,7 +27,7 @@ namespace {
 #define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
                        "camera version board: "\
                        BOARD_VERSION
-#define CRLF           "\r\n> "
+#define PROMPT         "\r\n> "
 #define POWER_ON_DELAY 50 // hardware power on delay needed to start camera
 #define CAPTURE_COUNT  5 // capture image count
 #define INTERVAL_TIME  500 // delay between each capture, if bigger than one
@@ -138,7 +138,7 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
     data = base_address;
 
     // print data to serial port
-    pc.printf(CRLF);
+    pc.printf(PROMPT);
     pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_index, length);
 
 }
@@ -162,10 +162,10 @@ void application(void)
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
     if (camera.iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
-        pc.printf(CRLF);
+        pc.printf(PROMPT);
         pc.printf("omnivision sensor ov5640 initialized");
     } else {
-        pc.printf(CRLF);
+        pc.printf(PROMPT);
         pc.printf("error: omnivision sensor ov5640 initialization failed");
         return;
     }
@@ -175,10 +175,10 @@ void application(void)
         // wait semaphore
         Thread::signal_wait(0x1);
         if (capture_sequence(CAPTURE_COUNT, INTERVAL_TIME, FLASH_ENABLE)) {
-            pc.printf(CRLF);
+            pc.printf(PROMPT);
             pc.printf("complete camera acquisition");
         } else {
-            pc.printf(CRLF);
+            pc.printf(PROMPT);
             pc.printf("camera acquisition error");
         }
     }
