@@ -163,12 +163,12 @@ void application(void)
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
     if (camera.iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
-        pc.printf("omnivision sensor ov5640 initialized");
+        pc.printf("Omnivision sensor ov5640 initialized");
         pc.printf(PROMPT);
-        pc.printf("Press button to start snapshot capture...");
+        pc.printf("Press the button to start snapshot capture...");
     } else {
         pc.printf(PROMPT);
-        pc.printf("error: omnivision sensor ov5640 initialization failed");
+        pc.printf("Error: omnivision sensor ov5640 initialization failed");
         return;
     }
 
@@ -178,10 +178,10 @@ void application(void)
         Thread::signal_wait(0x1);
         if (capture_sequence(CAPTURE_COUNT, INTERVAL_TIME, FLASH_ENABLE)) {
             pc.printf(PROMPT);
-            pc.printf("complete camera acquisition");
+            pc.printf("Complete camera acquisition");
         } else {
             pc.printf(PROMPT);
-            pc.printf("camera acquisition error");
+            pc.printf("Camera acquisition error");
         }
     }
 }
