@@ -16,8 +16,7 @@
  */
 #include "mbed.h"
 
-#include "omnivision-technologies-inc-ov5640/ov5640/ov5640.h"
-#include "led-flash-lm3405/led-flash-lm3405/led_flash_lm3405.h"
+#include "zest-sensor-camera/zest-sensor-camera.h"
 
 using namespace sixtron;
 
@@ -46,8 +45,7 @@ static DigitalOut led1(LED1);
 static InterruptIn button(BUTTON1);
 static DigitalOut camera_pwr(GPIO15);
 static DigitalOut camera_reset(WKUP);
-OV5640 &camera = OV5640::instance();
-LED_FLASH_LM3405 led_flash(GPIO14);
+ZestSensorCamera device(GPIO14);
 
 // RTOS
 Thread thread_application;
@@ -66,13 +64,13 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     while (capture_index != capture_count) {
         timeout_ms = TIMEOUT_MS;
         // clear flag frame ready
-        camera.set_frame_is_detected(false);
+        device.ov5640().set_frame_is_detected(false);
         // setup led flash
         if (flash_enable == true) {
-            led_flash.turn_on();
+            device.lm3405().turn_on();
         }
         // start ov5640 camera capture
-        camera.start_capture();
+        device.ov5640().start_capture();
         // wait frame ready
         do{
             wait_ms(1);
@@ -80,21 +78,21 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
             if (timeout_ms <= 0) {
                 break;
             }
-        }while((camera.frame_is_detected() != true));
+        }while((device.ov5640().frame_is_detected() != true));
 
         // turn off led flash
         if (flash_enable == true) {
-            led_flash.turn_off();
+            device.lm3405().turn_off();
         }
         // resume DCMI camera
-        camera.resume();
+        device.ov5640().resume();
         // if no timeout occurred
         if (timeout_ms > 0) {
             res = true;
             // increment index
             capture_index++;
             // check if the jpeg mode is enable
-            if (camera.jpeg_mode() == OV5640::JpegMode::ENABLE) {
+            if (device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
                 jpeg_traitment(capture_index, ov5640_camera_data());
             }
             // set interval capture time
@@ -102,7 +100,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
                 wait_ms(interval_time);
             }
         } else {
-            camera.stop();
+        	device.ov5640().stop();
             // error
             res = false;
             break;
@@ -150,7 +148,7 @@ void application_setup(void)
     wait_ms(POWER_ON_DELAY);
     camera_reset = 0;
     // led flash power on
-    led_flash.power_on();
+    device.lm3405().power_on();
     // set user button handler
     button.fall(button_handler);
 }
@@ -161,7 +159,7 @@ void application(void)
     application_setup();
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-    if (camera.iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
+    if (device.ov5640().iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
         pc.printf(PROMPT);
