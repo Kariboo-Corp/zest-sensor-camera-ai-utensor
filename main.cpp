@@ -27,15 +27,15 @@ namespace {
                        "camera version board: "\
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
-#define POWER_ON_DELAY 50 // hardware power on delay needed to start camera
+#define POWER_ON_DELAY 50 // hardware power up delay needed to start camera
 #define CAPTURE_COUNT  1 // capture image count
-#define INTERVAL_TIME  500 // delay between each capture, if bigger than one
-#define FLASH_ENABLE   1 // state of led flash while capture
+#define INTERVAL_TIME  500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
+#define FLASH_ENABLE   1 // state of led flash during the capture
 }
 
-// Prototype
+// Prototypes
 bool capture_sequence(int capture_count, int interval_time, bool flash_enable);
-void jpeg_traitment(int jpeg_index, uint8_t *data);
+void jpeg_processing(int jpeg_index, uint8_t *data);
 void application_setup(void);
 void application(void);
 
@@ -93,14 +93,14 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
             capture_index++;
             // check if the jpeg mode is enable
             if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
-                jpeg_traitment(capture_index, ov5640_camera_data());
+                jpeg_processing(capture_index, ov5640_camera_data());
             }
             // set interval capture time
             if (interval_time != 0) {
                 wait_ms(interval_time);
             }
         } else {
-        	camera_device.ov5640().stop();
+            camera_device.ov5640().stop();
             // error
             res = false;
             break;
@@ -110,7 +110,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     return res;
 }
 
-void jpeg_traitment(int jpeg_index, uint8_t *data)
+void jpeg_processing(int jpeg_index, uint8_t *data)
 {
     size_t i = 0;
     uint32_t jpgstart = 0;
@@ -118,8 +118,9 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
     uint8_t  *base_address = NULL;
     uint32_t length = 0;
 
-    for (i=0; i < OV5640_JPEG_BUFFER_SIZE; i++)//search for 0XFF 0XD8 and 0XFF 0XD9, get size of JPG
+    for (i=0; i < OV5640_JPEG_BUFFER_SIZE; i++)
     {
+        //search for 0XFF 0XD8 0XFF and 0XFF 0XD9, get size of JPG
         if ((data[i] == 0xFF) && (data[i+1] == 0xD8) && (data[i+2] == 0xFF)) {
             base_address = &data[i];
             jpgstart=i;
@@ -143,11 +144,11 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
 
 void application_setup(void)
 {
-    // camera pwer on
+    // camera power on
     camera_pwr = 1;
     wait_ms(POWER_ON_DELAY);
     camera_reset = 0;
-    // led flash power on
+    // power up led flash
     camera_device.lm3405().power_on();
     // set user button handler
     button.fall(button_handler);
@@ -170,7 +171,7 @@ void application(void)
         return;
     }
 
-    // process: wait user button event to start the capture
+    // process: wait an user button event to start the capture
     while (true) {
         // wait semaphore
         Thread::signal_wait(0x1);
@@ -194,5 +195,4 @@ int main()
     thread_application.set_priority(osPriorityHigh);
     // start thread
     thread_application.start(application);
-
 }
