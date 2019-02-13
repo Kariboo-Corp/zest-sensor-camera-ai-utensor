@@ -1,4 +1,4 @@
-# Zest_Sensor_Camera
+# Zest_Sensor_Camera demo
 
 A basic example to demonstrate how to use the Zest_Sensor_Camera.
 
@@ -12,7 +12,7 @@ To clone **and** deploy the project in one command, use `mbed import` and skip t
 target and toolchain definition:
 
 ```shell
-mbed import https://gitlab.com/catie_6tron/zest_sensor_camera.git zest_sensor_camera
+mbed import https://gitlab.com/catie_6tron/zest-sensor-camera-demo.git zest-sensor-camera-demo
 ```
 
 Alternatively:
@@ -20,8 +20,8 @@ Alternatively:
 - Clone to "zest_sensor_camera" and enter it:
 
   ```shell
-  git clone https://gitlab.com/catie_6tron/zest_sensor_camera.git zest_sensor_camera
-  cd zest_sensor_camera
+  git clone https://gitlab.com/catie_6tron/zest-sensor-camera-demo.git zest-sensor-camera-demo
+  cd zest-sensor-camera-demo
   ```
 
 - Create an empty Mbed CLI configuration file:
@@ -42,10 +42,10 @@ Alternatively:
   mbed deploy
   ```
 
-Define your target (eg. `ZEST_CORE_STM32L496RG`) and toolchain:
+Define your target (eg. `ZEST_CORE_STM32L4A6RG`) and toolchain:
 
 ```shell
-mbed target ZEST_CORE_STM32L496RG
+mbed target ZEST_CORE_STM32L4A6RG
 mbed toolchain GCC_ARM
 ```
 
@@ -63,26 +63,26 @@ Compile the project:
 mbed compile
 ```
 
-Program the target device (eg. `STM32L496RG` for the Zest_Core_STM32L496RG) with a J-Link
+Program the target device (eg. `STM32L4A6RG` for the Zest_Core_STM32L4A6RG) with a J-Link
 debug probe:
 
 ```shell
-python dist/program.py STM32L496RG BUILD/ZEST_CORE_STM32L496RG/GCC_ARM/zest_sensor_camera.elf
+python dist/program.py STM32L496RG BUILD/ZEST_CORE_STM32L4A6RG/GCC_ARM/zest-sensor-camera-demo.elf
 ```
 
-Debug on the target device (eg. `STM32L496RG` for the Zest_Core_STM32L496RG) with a
+Debug on the target device (eg. `STM32L4A6RG` for the Zest_Core_STM32L4A6RG) with a
 J-Link debug probe.
 
 - First, start the GDB server:
 
   ```shell
-  JLinkGDBServer -device STM32L496RG
+  JLinkGDBServer -device STM32L4A6RG
   ```
 
 - Then, in another terminal, start the debugger:
 
   ```shell
-  arm-none-eabi-gdb BUILD/ZEST_CORE_STM32L496RG/GCC_ARM/zest_sensor_camera.elf
+  arm-none-eabi-gdb BUILD/ZEST_CORE_STM32L4A6RG/GCC_ARM/zest-sensor-camera-demo.elf
   ```
 
 *Note:* You may have to adjust your [GDB auto-loading safe path](https://sourceware.org/gdb/onlinedocs/gdb/Auto_002dloading-safe-path.html#Auto_002dloading-safe-path)
