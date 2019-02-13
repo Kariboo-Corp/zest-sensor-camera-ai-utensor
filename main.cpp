@@ -16,8 +16,7 @@
  */
 #include "mbed.h"
 
-#include "omnivision-technologies-inc-ov5640/ov5640/ov5640.h"
-#include "led-flash-lm3405/led-flash-lm3405/led_flash_lm3405.h"
+#include "zest-sensor-camera/zest-sensor-camera.h"
 
 using namespace sixtron;
 
@@ -28,15 +27,15 @@ namespace {
                        "camera version board: "\
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
-#define POWER_ON_DELAY 50 // hardware power on delay needed to start camera
+#define POWER_ON_DELAY 50 // hardware power up delay needed to start camera
 #define CAPTURE_COUNT  1 // capture image count
-#define INTERVAL_TIME  500 // delay between each capture, if bigger than one
-#define FLASH_ENABLE   1 // state of led flash while capture
+#define INTERVAL_TIME  500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
+#define FLASH_ENABLE   1 // state of led flash during the capture
 }
 
-// Prototype
+// Prototypes
 bool capture_sequence(int capture_count, int interval_time, bool flash_enable);
-void jpeg_traitment(int jpeg_index, uint8_t *data);
+void jpeg_processing(int jpeg_index, uint8_t *data);
 void application_setup(void);
 void application(void);
 
@@ -46,8 +45,7 @@ static DigitalOut led1(LED1);
 static InterruptIn button(BUTTON1);
 static DigitalOut camera_pwr(GPIO15);
 static DigitalOut camera_reset(WKUP);
-OV5640 &camera = OV5640::instance();
-LED_FLASH_LM3405 led_flash(GPIO14);
+ZestSensorCamera camera_device(GPIO14);
 
 // RTOS
 Thread thread_application;
@@ -66,13 +64,13 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     while (capture_index != capture_count) {
         timeout_ms = TIMEOUT_MS;
         // clear flag frame ready
-        camera.set_frame_is_detected(false);
+        camera_device.ov5640().set_frame_is_detected(false);
         // setup led flash
         if (flash_enable == true) {
-            led_flash.turn_on();
+            camera_device.lm3405().turn_on();
         }
         // start ov5640 camera capture
-        camera.start_capture();
+        camera_device.ov5640().start_capture();
         // wait frame ready
         do{
             wait_ms(1);
@@ -80,29 +78,29 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
             if (timeout_ms <= 0) {
                 break;
             }
-        }while((camera.frame_is_detected() != true));
+        }while((camera_device.ov5640().frame_is_detected() != true));
 
         // turn off led flash
         if (flash_enable == true) {
-            led_flash.turn_off();
+            camera_device.lm3405().turn_off();
         }
         // resume DCMI camera
-        camera.resume();
+        camera_device.ov5640().resume();
         // if no timeout occurred
         if (timeout_ms > 0) {
             res = true;
             // increment index
             capture_index++;
             // check if the jpeg mode is enable
-            if (camera.jpeg_mode() == OV5640::JpegMode::ENABLE) {
-                jpeg_traitment(capture_index, ov5640_camera_data());
+            if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
+                jpeg_processing(capture_index, ov5640_camera_data());
             }
             // set interval capture time
             if (interval_time != 0) {
                 wait_ms(interval_time);
             }
         } else {
-            camera.stop();
+            camera_device.ov5640().stop();
             // error
             res = false;
             break;
@@ -112,7 +110,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     return res;
 }
 
-void jpeg_traitment(int jpeg_index, uint8_t *data)
+void jpeg_processing(int jpeg_index, uint8_t *data)
 {
     size_t i = 0;
     uint32_t jpgstart = 0;
@@ -120,8 +118,9 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
     uint8_t  *base_address = NULL;
     uint32_t length = 0;
 
-    for (i=0; i < OV5640_JPEG_BUFFER_SIZE; i++)//search for 0XFF 0XD8 and 0XFF 0XD9, get size of JPG
+    for (i=0; i < OV5640_JPEG_BUFFER_SIZE; i++)
     {
+        //search for 0XFF 0XD8 0XFF and 0XFF 0XD9, get size of JPG
         if ((data[i] == 0xFF) && (data[i+1] == 0xD8) && (data[i+2] == 0xFF)) {
             base_address = &data[i];
             jpgstart=i;
@@ -145,12 +144,12 @@ void jpeg_traitment(int jpeg_index, uint8_t *data)
 
 void application_setup(void)
 {
-    // camera pwer on
+    // camera power on
     camera_pwr = 1;
     wait_ms(POWER_ON_DELAY);
     camera_reset = 0;
-    // led flash power on
-    led_flash.power_on();
+    // power up led flash
+    camera_device.lm3405().power_on();
     // set user button handler
     button.fall(button_handler);
 }
@@ -161,18 +160,18 @@ void application(void)
     application_setup();
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-    if (camera.iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
+    if (camera_device.ov5640().iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
         pc.printf(PROMPT);
-        pc.printf("Press the button to start snapshot capture...");
+        pc.printf("Press the button to start the snapshot capture...");
     } else {
         pc.printf(PROMPT);
         pc.printf("Error: omnivision sensor ov5640 initialization failed");
         return;
     }
 
-    // process: wait user button event to start the capture
+    // process: wait an user button event to start the capture
     while (true) {
         // wait semaphore
         Thread::signal_wait(0x1);
@@ -196,5 +195,4 @@ int main()
     thread_application.set_priority(osPriorityHigh);
     // start thread
     thread_application.start(application);
-
 }
