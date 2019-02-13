@@ -164,7 +164,7 @@ void application(void)
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
         pc.printf(PROMPT);
-        pc.printf("Press the button to start snapshot capture...");
+        pc.printf("Press the button to start the snapshot capture...");
     } else {
         pc.printf(PROMPT);
         pc.printf("Error: omnivision sensor ov5640 initialization failed");
