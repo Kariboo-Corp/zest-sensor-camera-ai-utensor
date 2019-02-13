@@ -14,7 +14,7 @@ The following boards are required:
 
 ### Software requirements
 
-This demo makes use of the followig libraries:
+This demo makes use of the following libraries:
 
 * [Zest Sensor Camera](https://gitlab.com/catie_6tron/zest-sensor-camera) (include the lm3405 led flash and ov5640 sensor drivers)
 
