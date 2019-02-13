@@ -1,6 +1,6 @@
 # Zest_Sensor_Camera demo
 
-A basic example to demonstrate how to use the Zest_Sensor_Camera.
+A basic example to demonstrate how to use the Zest_Sensor_Camera board.
 
 ## Requirements
 
@@ -8,7 +8,7 @@ A basic example to demonstrate how to use the Zest_Sensor_Camera.
 
 The following boards are required:
 
-* Zest Core STM32l4A6RG
+* Zest Core STM32L4A6RG
 * Zest Sensor Camera
 * Zest Battery LiPo (optional)
 
@@ -29,7 +29,7 @@ mbed import https://gitlab.com/catie_6tron/zest-sensor-camera-demo.git zest-sens
 
 Alternatively:
 
-- Clone to "zest_sensor_camera" and enter it:
+- Clone to "zest-sensor-camera-demo" and enter it:
 
   ```shell
   git clone https://gitlab.com/catie_6tron/zest-sensor-camera-demo.git zest-sensor-camera-demo
