@@ -4,7 +4,19 @@ A basic example to demonstrate how to use the Zest_Sensor_Camera.
 
 ## Requirements
 
-*List Zest_Sensor_Camera requirements here*
+### Hardware requirements
+
+The following boards are required:
+
+* Zest Core STM32l4A6RG
+* Zest Sensor Camera
+* Zest Battery LiPo (optional)
+
+### Software requirements
+
+This demo makes use of the followig libraries:
+
+* [Zest Sensor Camera](https://gitlab.com/catie_6tron/zest-sensor-camera)(include lm3405 led flash and ov5640 sensor drivers)
 
 ## Usage
 
