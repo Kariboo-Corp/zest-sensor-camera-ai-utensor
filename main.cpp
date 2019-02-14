@@ -23,7 +23,7 @@ using namespace sixtron;
 namespace {
 #define TIMEOUT_MS     1000 // timeout capture sequence in milliseconds
 #define BOARD_VERSION  "v2.1.0"
-#define START_PROMPT   "\r\n*** Zest Sensor Camera Example ***\r\n"\
+#define START_PROMPT   "\r\n*** Zest Sensor Camera Demo ***\r\n"\
                        "camera version board: "\
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
@@ -49,13 +49,12 @@ ZestSensorCamera camera_device(GPIO14);
 
 // RTOS
 Thread thread_application;
-
-// Variables
-bool frame_detected = false;
+Thread thread_camera;
+osEvent os_event;
 
 static void camera_frame_handler(void)
 {
-    frame_detected = true;
+    thread_application.signal_set(0x2);
 }
 
 static void button_handler(void)
@@ -71,47 +70,42 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
 
     while (capture_index != capture_count) {
         timeout_ms = TIMEOUT_MS;
-        // clear flag frame ready
-        frame_detected = false;
         // setup led flash
         if (flash_enable == true) {
             camera_device.lm3405().turn_on();
         }
         // start ov5640 camera capture
         camera_device.ov5640().start_capture();
-        // wait frame ready
-        do{
-            wait_ms(1);
-            timeout_ms--;
-            if (timeout_ms <= 0) {
-                break;
-            }
-        } while(frame_detected != true);
+
+        os_event = thread_application.signal_wait(0x2, 1000);
 
         // turn off led flash
         if (flash_enable == true) {
             camera_device.lm3405().turn_off();
         }
-        // resume DCMI camera
-        camera_device.ov5640().resume();
-        // if no timeout occurred
-        if (timeout_ms > 0) {
-            res = true;
-            // increment index
-            capture_index++;
-            // check if the jpeg mode is enable
-            if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
-                jpeg_processing(capture_index, ov5640_camera_data());
-            }
-            // set interval capture time
-            if (interval_time != 0) {
-                wait_ms(interval_time);
-            }
-        } else {
+        // check OS event
+        if (os_event.status != osEventSignal) {
             camera_device.ov5640().stop();
             // error
             res = false;
             break;
+        } else {
+            // resume DCMI camera
+            camera_device.ov5640().resume();
+            // if no timeout occurred
+            if (timeout_ms > 0) {
+                res = true;
+                // increment index
+                capture_index++;
+                // check if the jpeg mode is enable
+                if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
+                    jpeg_processing(capture_index, ov5640_camera_data());
+                }
+                // set interval capture time
+                if (interval_time != 0) {
+                    wait_ms(interval_time);
+                }
+            }
         }
     }
 
@@ -200,9 +194,8 @@ void application(void)
 int main()
 {
     pc.printf(START_PROMPT);
-
-    //set priority thread application
-    thread_application.set_priority(osPriorityHigh);
     // start thread
     thread_application.start(application);
+    //set priority thread application
+    thread_application.set_priority(osPriorityNormal);
 }
