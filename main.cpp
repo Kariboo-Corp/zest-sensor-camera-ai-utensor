@@ -50,6 +50,14 @@ ZestSensorCamera camera_device(GPIO14);
 // RTOS
 Thread thread_application;
 
+// Variables
+bool frame_detected = false;
+
+static void camera_frame_handler(void)
+{
+    frame_detected = true;
+}
+
 static void button_handler(void)
 {
     thread_application.signal_set(0x1);
@@ -64,7 +72,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
     while (capture_index != capture_count) {
         timeout_ms = TIMEOUT_MS;
         // clear flag frame ready
-        camera_device.ov5640().set_frame_is_detected(false);
+        frame_detected = false;
         // setup led flash
         if (flash_enable == true) {
             camera_device.lm3405().turn_on();
@@ -78,7 +86,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
             if (timeout_ms <= 0) {
                 break;
             }
-        }while((camera_device.ov5640().frame_is_detected() != true));
+        } while(frame_detected != true);
 
         // turn off led flash
         if (flash_enable == true) {
@@ -163,6 +171,8 @@ void application(void)
     if (camera_device.ov5640().iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
+        // attach callback
+        camera_device.ov5640().attach(camera_frame_handler);
         pc.printf(PROMPT);
         pc.printf("Press the button to start the snapshot capture...");
     } else {
