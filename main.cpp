@@ -171,7 +171,7 @@ void application(void)
     if (camera_device.ov5640().iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
-        // attach callback
+        // attach frame complete callback
         camera_device.ov5640().attach(camera_frame_handler);
         pc.printf(PROMPT);
         pc.printf("Press the button to start the snapshot capture...");
