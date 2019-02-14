@@ -77,7 +77,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
         // start ov5640 camera capture
         camera_device.ov5640().start_capture();
 
-        os_event = thread_application.signal_wait(0x2, 1000);
+        os_event = thread_application.signal_wait(0x2, TIMEOUT_MS);
 
         // turn off led flash
         if (flash_enable == true) {
