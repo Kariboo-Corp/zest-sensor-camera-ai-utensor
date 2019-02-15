@@ -54,8 +54,10 @@ static osEvent os_event;
 
 static void camera_frame_handler(void)
 {
+#if FLASH_ENABLE
     // stop flash
     camera_device.flash_turn_off();
+#endif
     thread_application.signal_set(0x2);
 }
 
@@ -80,30 +82,22 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
 
         // check OS event
         if (os_event.status != osEventSignal) {
-            // ensure that the flash is deactivated
-            camera_device.flash_turn_off();
-            // stop dcmi camera acquisition
-            camera_device.ov5640().stop();
+            camera_device.stop();
             // error
             res = false;
             break;
         } else {
-            // resume DCMI camera
-            camera_device.ov5640().resume();
-            // if no timeout occurred
-            if (timeout_ms > 0) {
-                res = true;
-                // increment index
-                capture_index++;
-                // check if the jpeg mode is enable
-                if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
-                    jpeg_processing(capture_index, ov5640_camera_data());
-                }
-                // set interval capture time
-                if (interval_time != 0) {
-                    wait_ms(interval_time);
-                }
-            }
+			res = true;
+			// increment index
+			capture_index++;
+			// check if the jpeg mode is enable
+			if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
+				jpeg_processing(capture_index, ov5640_camera_data());
+			}
+			// set interval capture time
+			if (interval_time != 0) {
+				wait_ms(interval_time);
+			}
         }
     }
 
