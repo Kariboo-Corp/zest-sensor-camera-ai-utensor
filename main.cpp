@@ -46,7 +46,6 @@ static InterruptIn button(BUTTON1);
 static DigitalOut camera_pwr(GPIO15);
 static DigitalOut camera_reset(WKUP);
 ZestSensorCamera camera_device;
-SPI master(SPI1_MOSI, SPI1_MISO, SPI1_SCK);
 
 // RTOS
 static Thread thread_application;
