@@ -109,15 +109,14 @@ void jpeg_processing(int jpeg_index, uint8_t *data)
     uint8_t  *base_address = NULL;
     uint32_t length = 0;
 
-    for (i=0; i < OV5640_JPEG_BUFFER_SIZE; i++)
-    {
+    for (i = 0; i < OV5640_JPEG_BUFFER_SIZE; i++) {
         //search for 0XFF 0XD8 0XFF and 0XFF 0XD9, get size of JPG
-        if ((data[i] == 0xFF) && (data[i+1] == 0xD8) && (data[i+2] == 0xFF)) {
+        if ((data[i] == 0xFF) && (data[i + 1] == 0xD8) && (data[i + 2] == 0xFF)) {
             base_address = &data[i];
-            jpgstart=i;
-            head=1; // Already found  FF D8
+            jpgstart = i;
+            head = 1; // Already found  FF D8
         }
-        if ((data[i] == 0xFF) && (data[i+1] == 0xD9) && head) {
+        if ((data[i] == 0xFF) && (data[i + 1] == 0xD9) && head) {
             // set jpeg length
             length = i - jpgstart + 2;
             break;
@@ -147,7 +146,8 @@ void application(void)
     application_setup();
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-    if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
+    if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS,
+                    OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)) {
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
         // attach frame complete callback
