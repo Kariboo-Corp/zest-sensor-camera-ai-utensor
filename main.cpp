@@ -45,12 +45,11 @@ static DigitalOut led1(LED1);
 static InterruptIn button(BUTTON1);
 static DigitalOut camera_pwr(GPIO15);
 static DigitalOut camera_reset(WKUP);
-ZestSensorCamera camera_device(GPIO14);
+ZestSensorCamera camera_device;
 
 // RTOS
-Thread thread_application;
-Thread thread_camera;
-osEvent os_event;
+static Thread thread_application;
+static osEvent os_event;
 
 static void camera_frame_handler(void)
 {
