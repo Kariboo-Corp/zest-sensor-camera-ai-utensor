@@ -54,13 +54,13 @@ static osEvent os_event;
 
 static void camera_frame_handler(void)
 {
+    // stop flash
+    camera_device.flash_turn_off();
     thread_application.signal_set(0x2);
 }
 
 static void button_handler(void)
 {
-    // stop flash
-    camera_device.flash_turn_off();
     thread_application.signal_set(0x1);
 }
 
