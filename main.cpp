@@ -46,6 +46,7 @@ static InterruptIn button(BUTTON1);
 static DigitalOut camera_pwr(GPIO15);
 static DigitalOut camera_reset(WKUP);
 ZestSensorCamera camera_device;
+SPI master(SPI1_MOSI, SPI1_MISO, SPI1_SCK);
 
 // RTOS
 static Thread thread_application;
@@ -58,6 +59,8 @@ static void camera_frame_handler(void)
 
 static void button_handler(void)
 {
+    // stop flash
+    camera_device.flash_turn_off();
     thread_application.signal_set(0x1);
 }
 
@@ -69,21 +72,17 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
 
     while (capture_index != capture_count) {
         timeout_ms = TIMEOUT_MS;
-        // setup led flash
-        if (flash_enable == true) {
-            camera_device.lm3405().turn_on();
-        }
+
         // start ov5640 camera capture
-        camera_device.ov5640().start_capture();
+        camera_device.take_snapshot(flash_enable);
 
         os_event = thread_application.signal_wait(0x2, TIMEOUT_MS);
 
-        // turn off led flash
-        if (flash_enable == true) {
-            camera_device.lm3405().turn_off();
-        }
         // check OS event
         if (os_event.status != osEventSignal) {
+            // ensure that the flash is deactivated
+            camera_device.flash_turn_off();
+            // stop dcmi camera acquisition
             camera_device.ov5640().stop();
             // error
             res = false;
@@ -161,11 +160,11 @@ void application(void)
     application_setup();
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-    if (camera_device.ov5640().iniatilize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
+    if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS, OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)){
         pc.printf(PROMPT);
         pc.printf("Omnivision sensor ov5640 initialized");
         // attach frame complete callback
-        camera_device.ov5640().attach(camera_frame_handler);
+        camera_device.attach_callback(camera_frame_handler);
         pc.printf(PROMPT);
         pc.printf("Press the button to start the snapshot capture...");
     } else {
