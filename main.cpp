@@ -27,7 +27,6 @@ namespace {
                        "camera version board: "\
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
-
 #define CAPTURE_COUNT  1 // capture image count
 #define INTERVAL_TIME  500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
 #define FLASH_ENABLE   1 // state of led flash during the capture
