@@ -90,8 +90,8 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
 			res = true;
 			// increment index
 			capture_index++;
-			// check if the jpeg mode is enable
-			if (camera_device.ov5640().jpeg_mode() == OV5640::JpegMode::ENABLE) {
+			// check if the jpeg picture is enable
+			if (camera_device.jpeg_picture()) {
 				jpeg_processing(capture_index, ov5640_camera_data());
 			}
 			// set interval capture time
