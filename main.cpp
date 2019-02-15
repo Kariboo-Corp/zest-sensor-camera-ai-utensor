@@ -27,7 +27,7 @@ namespace {
                        "camera version board: "\
                        BOARD_VERSION
 #define PROMPT         "\r\n> "
-#define POWER_ON_DELAY 50 // hardware power up delay needed to start camera
+
 #define CAPTURE_COUNT  1 // capture image count
 #define INTERVAL_TIME  500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
 #define FLASH_ENABLE   1 // state of led flash during the capture
@@ -43,8 +43,6 @@ void application(void);
 RawSerial pc(SERIAL_TX, SERIAL_RX);
 static DigitalOut led1(LED1);
 static InterruptIn button(BUTTON1);
-static DigitalOut camera_pwr(GPIO15);
-static DigitalOut camera_reset(WKUP);
 ZestSensorCamera camera_device;
 
 // RTOS
@@ -77,6 +75,7 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
         // start ov5640 camera capture
         camera_device.take_snapshot(flash_enable);
 
+        // wait thread signal, during TIMEOUT_MS, which indicate the end of snapshot
         os_event = thread_application.signal_wait(0x2, TIMEOUT_MS);
 
         // check OS event
@@ -86,17 +85,17 @@ bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
             res = false;
             break;
         } else {
-			res = true;
-			// increment index
-			capture_index++;
-			// check if the jpeg picture is enable
-			if (camera_device.jpeg_picture()) {
-				jpeg_processing(capture_index, ov5640_camera_data());
-			}
-			// set interval capture time
-			if (interval_time != 0) {
-				wait_ms(interval_time);
-			}
+            res = true;
+            // increment index
+            capture_index++;
+            // check if the jpeg picture is enable
+            if (camera_device.jpeg_picture()) {
+                jpeg_processing(capture_index, ov5640_camera_data());
+            }
+            // set interval capture time
+            if (interval_time != 0) {
+                wait_ms(interval_time);
+            }
         }
     }
 
@@ -137,12 +136,8 @@ void jpeg_processing(int jpeg_index, uint8_t *data)
 
 void application_setup(void)
 {
-    // camera power on
-    camera_pwr = 1;
-    wait_ms(POWER_ON_DELAY);
-    camera_reset = 0;
-    // power up led flash
-    camera_device.lm3405().power_on();
+    // setup power
+    camera_device.power_up();
     // set user button handler
     button.fall(button_handler);
 }
