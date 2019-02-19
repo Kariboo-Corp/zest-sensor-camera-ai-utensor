@@ -50,10 +50,6 @@ static osEvent os_event;
 
 static void camera_frame_handler(void)
 {
-#if FLASH_ENABLE
-    // stop flash
-    camera_device.flash_turn_off();
-#endif
     thread_application.signal_set(0x2);
 }
 
