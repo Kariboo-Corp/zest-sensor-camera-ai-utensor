@@ -21,6 +21,7 @@
 using namespace sixtron;
 
 namespace {
+#define PERIOD_MS      500
 #define TIMEOUT_MS     1000 // timeout capture sequence in milliseconds
 #define BOARD_VERSION  "v2.1.0"
 #define START_PROMPT   "\r\n*** Zest Sensor Camera Demo ***\r\n"\
@@ -33,10 +34,10 @@ namespace {
 }
 
 // Prototypes
-bool capture_sequence(int capture_count, int interval_time, bool flash_enable);
-void jpeg_processing(int jpeg_index, uint8_t *data);
 void application_setup(void);
 void application(void);
+void jpeg_processing(int jpeg_index, uint8_t *data);
+void capture_process(void);
 
 // Peripherals
 RawSerial pc(SERIAL_TX, SERIAL_RX);
@@ -46,58 +47,22 @@ ZestSensorCamera camera_device;
 
 // RTOS
 static Thread thread_application;
-static osEvent os_event;
+static EventQueue queue;
+
+// Variables
+int jpeg_id = 0;
 
 static void camera_frame_handler(void)
 {
-    thread_application.signal_set(0x2);
+    queue.call(application);
 }
 
 static void button_handler(void)
 {
-    thread_application.signal_set(0x1);
+	queue.call(capture_process);
 }
 
-bool capture_sequence(int capture_count, int interval_time, bool flash_enable)
-{
-    bool res = false;
-    int timeout_ms;
-    int capture_index = 0;
-
-    while (capture_index != capture_count) {
-        timeout_ms = TIMEOUT_MS;
-
-        // start ov5640 camera capture
-        camera_device.take_snapshot(flash_enable);
-
-        // wait thread signal, during TIMEOUT_MS, which indicate the end of snapshot
-        os_event = thread_application.signal_wait(0x2, TIMEOUT_MS);
-
-        // check OS event
-        if (os_event.status != osEventSignal) {
-            camera_device.stop();
-            // error
-            res = false;
-            break;
-        } else {
-            res = true;
-            // increment index
-            capture_index++;
-            // check if the jpeg picture is enable
-            if (camera_device.jpeg_picture()) {
-                jpeg_processing(capture_index, ov5640_camera_data());
-            }
-            // set interval capture time
-            if (interval_time != 0) {
-                wait_ms(interval_time);
-            }
-        }
-    }
-
-    return res;
-}
-
-void jpeg_processing(int jpeg_index, uint8_t *data)
+uint32_t jpeg_processing(uint8_t *data)
 {
     size_t i = 0;
     uint32_t jpgstart = 0;
@@ -122,10 +87,7 @@ void jpeg_processing(int jpeg_index, uint8_t *data)
     //end of traitment: back to base address of jpeg
     data = base_address;
 
-    // print data to serial port
-    pc.printf(PROMPT);
-    pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_index, length);
-
+    return length;
 }
 
 void application_setup(void)
@@ -138,36 +100,25 @@ void application_setup(void)
 
 void application(void)
 {
-    // application setup
-    application_setup();
+	uint32_t jpeg_size = 0;
 
-    // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-    if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS,
-                    OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)) {
-        pc.printf(PROMPT);
-        pc.printf("Omnivision sensor ov5640 initialized");
-        // attach frame complete callback
-        camera_device.attach_callback(camera_frame_handler);
-        pc.printf(PROMPT);
-        pc.printf("Press the button to start the snapshot capture...");
-    } else {
-        pc.printf(PROMPT);
-        pc.printf("Error: omnivision sensor ov5640 initialization failed");
-        return;
-    }
+	jpeg_id = jpeg_id + 1;
+	// check if the jpeg picture is enable
+	if (camera_device.jpeg_picture()) {
+		jpeg_size = jpeg_processing(ov5640_camera_data());
+	    // print data to serial port
+	    pc.printf(PROMPT);
+	    pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_id, jpeg_size);
+	}
 
-    // process: wait an user button event to start the capture
-    while (true) {
-        // wait semaphore
-        Thread::signal_wait(0x1);
-        if (capture_sequence(CAPTURE_COUNT, INTERVAL_TIME, FLASH_ENABLE)) {
-            pc.printf(PROMPT);
-            pc.printf("Complete camera acquisition");
-        } else {
-            pc.printf(PROMPT);
-            pc.printf("Camera acquisition error");
-        }
-    }
+    pc.printf(PROMPT);
+	pc.printf("Complete camera acquisition");
+
+}
+
+void capture_process(void)
+{
+	camera_device.take_snapshot(FLASH_ENABLE);
 }
 
 // main() runs in its own thread in the OS
@@ -175,8 +126,29 @@ void application(void)
 int main()
 {
     pc.printf(START_PROMPT);
-    // start thread
-    thread_application.start(application);
-    //set priority thread application
-    thread_application.set_priority(osPriorityNormal);
+
+    // application setup
+    application_setup();
+
+    // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
+	if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS,
+					OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)) {
+		pc.printf(PROMPT);
+		pc.printf("Omnivision sensor ov5640 initialized");
+		// attach frame complete callback
+		camera_device.attach_callback(camera_frame_handler);
+		// start thread
+		thread_application.start(callback(&queue, &EventQueue::dispatch_forever));
+		pc.printf(PROMPT);
+		pc.printf("Press the button to start the snapshot capture...");
+	} else {
+		pc.printf(PROMPT);
+		pc.printf("Error: omnivision sensor ov5640 initialization failed");
+		return -1;
+	}
+
+    while (true) {
+        ThisThread::sleep_for(PERIOD_MS);
+        led1 = !led1;
+    }
 }
