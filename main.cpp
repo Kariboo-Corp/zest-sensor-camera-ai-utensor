@@ -36,7 +36,7 @@ namespace {
 // Prototypes
 void application_setup(void);
 void application(void);
-void jpeg_processing(int jpeg_index, uint8_t *data);
+uint32_t jpeg_processing(uint8_t *data);
 void capture_process(void);
 
 // Peripherals
