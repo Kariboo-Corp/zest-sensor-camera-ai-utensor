@@ -59,7 +59,7 @@ static void camera_frame_handler(void)
 
 static void button_handler(void)
 {
-	queue.call(capture_process);
+    queue.call(capture_process);
 }
 
 uint32_t jpeg_processing(uint8_t *data)
@@ -100,25 +100,25 @@ void application_setup(void)
 
 void application(void)
 {
-	uint32_t jpeg_size = 0;
+    uint32_t jpeg_size = 0;
 
-	jpeg_id = jpeg_id + 1;
-	// check if the jpeg picture is enable
-	if (camera_device.jpeg_picture()) {
-		jpeg_size = jpeg_processing(ov5640_camera_data());
-	    // print data to serial port
-	    pc.printf(PROMPT);
-	    pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_id, jpeg_size);
-	}
+    jpeg_id = jpeg_id + 1;
+    // check if the jpeg picture is enable
+    if (camera_device.jpeg_picture()) {
+        jpeg_size = jpeg_processing(ov5640_camera_data());
+        // print data to serial port
+        pc.printf(PROMPT);
+        pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_id, jpeg_size);
+    }
 
     pc.printf(PROMPT);
-	pc.printf("Complete camera acquisition");
+    pc.printf("Complete camera acquisition");
 
 }
 
 void capture_process(void)
 {
-	camera_device.take_snapshot(FLASH_ENABLE);
+    camera_device.take_snapshot(FLASH_ENABLE);
 }
 
 // main() runs in its own thread in the OS
@@ -131,21 +131,21 @@ int main()
     application_setup();
 
     // init ov5640 sensor: 15fps VGA resolution, jpeg compression enable and capture mode configured in snapshot mode
-	if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS,
-					OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)) {
-		pc.printf(PROMPT);
-		pc.printf("Omnivision sensor ov5640 initialized");
-		// attach frame complete callback
-		camera_device.attach_callback(camera_frame_handler);
-		// start thread
-		thread_application.start(callback(&queue, &EventQueue::dispatch_forever));
-		pc.printf(PROMPT);
-		pc.printf("Press the button to start the snapshot capture...");
-	} else {
-		pc.printf(PROMPT);
-		pc.printf("Error: omnivision sensor ov5640 initialization failed");
-		return -1;
-	}
+    if (camera_device.initialize(OV5640::Resolution::VGA_640x480, OV5640::FrameRate::_15_FPS,
+                    OV5640::JpegMode::ENABLE, OV5640::CameraMode::SNAPSHOT)) {
+        pc.printf(PROMPT);
+        pc.printf("Omnivision sensor ov5640 initialized");
+        // attach frame complete callback
+        camera_device.attach_callback(camera_frame_handler);
+        // start thread
+        thread_application.start(callback(&queue, &EventQueue::dispatch_forever));
+        pc.printf(PROMPT);
+        pc.printf("Press the button to start the snapshot capture...");
+    } else {
+        pc.printf(PROMPT);
+        pc.printf("Error: omnivision sensor ov5640 initialization failed");
+        return -1;
+    }
 
     while (true) {
         ThisThread::sleep_for(PERIOD_MS);
