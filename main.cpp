@@ -95,6 +95,8 @@ void application_setup(void)
     camera_device.power_up();
     // set user button handler
     button.fall(button_handler);
+    // re-init jpeg id
+    jpeg_id = 0;
 }
 
 void application(void)
