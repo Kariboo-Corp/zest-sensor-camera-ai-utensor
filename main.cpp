@@ -111,10 +111,8 @@ void application(void)
         pc.printf(PROMPT);
         pc.printf("JPEG %d stored in RAM: %ld bytes", jpeg_id, jpeg_size);
     }
-
     pc.printf(PROMPT);
     pc.printf("Complete camera acquisition");
-
 }
 
 // main() runs in its own thread in the OS
