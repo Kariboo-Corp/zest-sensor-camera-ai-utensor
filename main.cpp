@@ -37,7 +37,6 @@ namespace {
 void application_setup(void);
 void application(void);
 uint32_t jpeg_processing(uint8_t *data);
-void capture_process(void);
 
 // Peripherals
 RawSerial pc(SERIAL_TX, SERIAL_RX);
@@ -59,7 +58,7 @@ static void camera_frame_handler(void)
 
 static void button_handler(void)
 {
-    queue.call(capture_process);
+    queue.call(&camera_device, &ZestSensorCamera::take_snapshot, (bool)(FLASH_ENABLE));
 }
 
 uint32_t jpeg_processing(uint8_t *data)
@@ -114,11 +113,6 @@ void application(void)
     pc.printf(PROMPT);
     pc.printf("Complete camera acquisition");
 
-}
-
-void capture_process(void)
-{
-    camera_device.take_snapshot(FLASH_ENABLE);
 }
 
 // main() runs in its own thread in the OS
