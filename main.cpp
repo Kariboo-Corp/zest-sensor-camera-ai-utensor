@@ -15,22 +15,29 @@
  * limitations under the License.
  */
 #include "mbed.h"
+#include "swo.h"
+#include "FlashIAPBlockDevice.h"
+#include "USBMSD.h"
+#include "FATFileSystem.h"
+#include "BlockDevice.h"
 
 #include "zest-sensor-camera/zest-sensor-camera.h"
 
 using namespace sixtron;
 
 namespace {
-#define PERIOD_MS      500
-#define TIMEOUT_MS     1000 // timeout capture sequence in milliseconds
-#define BOARD_VERSION  "v2.1.0"
-#define START_PROMPT   "\r\n*** Zest Sensor Camera Demo ***\r\n"\
-                       "camera version board: "\
-                       BOARD_VERSION
-#define PROMPT         "\r\n> "
-#define CAPTURE_COUNT  1 // capture image count
-#define INTERVAL_TIME  500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
-#define FLASH_ENABLE   1 // state of led flash during the capture
+#define PERIOD_MS          500
+#define TIMEOUT_MS         1000 // timeout capture sequence in milliseconds
+#define BOARD_VERSION      "v2.1.0"
+#define START_PROMPT       "\r\n*** Zest Sensor Camera Demo ***\r\n"\
+                           "camera version board: "\
+                           BOARD_VERSION
+#define PROMPT             "\r\n> "
+#define CAPTURE_COUNT      1 // capture image count
+#define INTERVAL_TIME      500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
+#define FLASH_ENABLE       1 // state of led flash during the capture
+#define FLASHIAP_ADDRESS   0x08025000 // 0x0800000 + 500 kB
+#define FLASHIAP_SIZE      0x40000 //0x61A80    // 400 kB
 }
 
 // Prototypes
@@ -39,14 +46,19 @@ void application(void);
 uint32_t jpeg_processing(uint8_t *data);
 
 // Peripherals
-RawSerial pc(SERIAL_TX, SERIAL_RX);
+SWO pc;
 static DigitalOut led1(LED1);
 static InterruptIn button(BUTTON1);
 ZestSensorCamera camera_device;
 
 // RTOS
-static Thread thread_application;
+static Thread queue_thread;
 static EventQueue queue;
+
+// Create flash IAP block device
+BlockDevice *bd = new FlashIAPBlockDevice(FLASHIAP_ADDRESS, FLASHIAP_SIZE);
+//FlashIAPBlockDevice bd(FLASHIAP_ADDRESS, FLASHIAP_SIZE);
+FATFileSystem fs("fs");
 
 // Variables
 int jpeg_id = 0;
@@ -86,6 +98,48 @@ uint32_t jpeg_processing(uint8_t *data)
     //end of traitment: back to base address of jpeg
     data = base_address;
 
+    // Try to record jpeg in flash storage mounted on USB
+    //fs.mount(bd);
+
+    FILE *f;
+    fflush(stdout);
+    char filename[20];
+    sprintf(filename, "/fs/jpeg_%d.jpg", jpeg_id);
+    f = fopen(filename, "w");
+    pc.printf("%s\n", (!f ? "Fail :(" : "OK"));
+    if (!f) {
+        pc.printf("error: %s (%d)\n", strerror(errno), -errno);
+    }
+    int err = fwrite(data, sizeof(uint8_t), length, f);
+    pc.printf("Octets écrits : %d\n", err);
+    if (err < 0) {
+        pc.printf("Fail :(\n");
+        pc.printf("error: %s (%d)\n", strerror(errno), -errno);
+    }
+
+    fclose(f);
+
+    // Display the root directory
+    printf("Opening the root directory... ");
+    fflush(stdout);
+    DIR *d = opendir("/fs/");
+    printf("%s\n", (!d ? "Fail :(" : "OK"));
+    if (!d) {
+        error("error: %s (%d)\n", strerror(errno), -errno);
+    }
+
+    printf("root directory:\n");
+    while (true) {
+        struct dirent *e = readdir(d);
+        if (!e) {
+            break;
+        }
+
+        printf("    %s\n", e->d_name);
+    }
+
+    //fs.unmount();
+
     return length;
 }
 
@@ -97,6 +151,34 @@ void application_setup(void)
     button.fall(button_handler);
     // re-init jpeg id
     jpeg_id = 0;
+
+    // Initialize the flash IAP block device and print the memory layout
+	bd->init();
+	pc.printf("Flash block device size: %llu\n",         bd->size());
+	pc.printf("Flash block device read size: %llu\n",    bd->get_read_size());
+	pc.printf("Flash block device program size: %llu\n", bd->get_program_size());
+	pc.printf("Flash block device erase size: %llu\n",   bd->get_erase_size());
+
+    pc.printf("Mounting the filesystem... ");
+    fflush(stdout);
+    int err = fs.mount(bd);
+
+    //fs.format(bd);
+
+    pc.printf("%s\n", (err ? "Fail :(" : "OK"));
+    if (err) {
+        // Reformat if we can't mount the filesystem
+        // this should only happen on the first boot
+        pc.printf("No filesystem found, formatting... ");
+        fflush(stdout);
+        err = fs.reformat(bd);
+        pc.printf("%s\n", (err ? "Fail :(" : "OK"));
+        if (err) {
+            error("error: %s (%d)\n", strerror(-err), err);
+        }
+    }
+
+    //fs.unmount();
 }
 
 void application(void)
@@ -132,7 +214,7 @@ int main()
         // attach frame complete callback
         camera_device.attach_callback(camera_frame_handler);
         // start thread
-        thread_application.start(callback(&queue, &EventQueue::dispatch_forever));
+        queue_thread.start(callback(&queue, &EventQueue::dispatch_forever));
         pc.printf(PROMPT);
         pc.printf("Press the button to start the snapshot capture...");
     } else {
@@ -141,8 +223,9 @@ int main()
         return -1;
     }
 
+    USBMSD usb(bd);
+
     while (true) {
-        ThisThread::sleep_for(PERIOD_MS);
-        led1 = !led1;
+        usb.process();
     }
 }
