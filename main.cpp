@@ -36,8 +36,8 @@ namespace {
 #define CAPTURE_COUNT      1 // capture image count
 #define INTERVAL_TIME      500 // delay between each capture, used if the CAPTURE_COUNT is bigger than one
 #define FLASH_ENABLE       1 // state of led flash during the capture
-#define FLASHIAP_ADDRESS   0x08025000 // 0x0800000 + 500 kB
-#define FLASHIAP_SIZE      0x40000 //0x61A80    // 400 kB
+#define FLASHIAP_ADDRESS   0x08055000 // 0x0800000 + 350 kB
+#define FLASHIAP_SIZE      0x70000 //0x61A80    // 460 kB
 }
 
 // Prototypes
