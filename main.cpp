@@ -20,10 +20,17 @@
 #include "USBMSD.h"
 #include "FATFileSystem.h"
 #include "BlockDevice.h"
+#include <cmath>
+#include <iostream>
+
+#include "models/my_model/my_model.hpp"
+#include "models/samples/input_image.h"
+#include "uTensor.h"
 
 #include "zest-sensor-camera/zest-sensor-camera.h"
 
 using namespace sixtron;
+using namespace uTensor;
 
 namespace {
 #define PERIOD_MS          500
@@ -224,6 +231,25 @@ int main()
     }
 
     USBMSD usb(bd);
+
+    My_model model;
+
+    Tensor input_image = new RomTensor({1, 28, 28, 1}, flt, arr_input_image);
+    Tensor logits = new RamTensor({1, 10}, flt);
+
+    model.set_inputs({{My_model::input_0, input_image}}).set_outputs({{My_model::output_0, logits}}).eval();
+
+    float max_value = static_cast<float>(logits(0));
+    int max_index = 0;
+    for (int i = 1; i < 10; ++i) {
+        float value = static_cast<float>(logits(i));
+        if (value >= max_value) {
+        max_value = value;
+        max_index = i;
+        }
+    }
+
+    pc.printf("label : %d", max_index);
 
     while (true) {
         usb.process();
