@@ -15,6 +15,7 @@ op_DequantizeOperator_000()
 {
   Context::get_default_context()->set_ram_data_allocator(&ram_allocator);
   Context::get_default_context()->set_metadata_allocator(&metadata_allocator);
+
   // TODO: moving ROMTensor declarations here
 }
 

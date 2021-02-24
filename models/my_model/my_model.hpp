@@ -30,8 +30,8 @@ class My_model : public ModelInterface<1, 1>
   ReferenceOperators::MaxPoolOperator<int8_t> op_MaxPoolOperator_006;
 
   // memory allocators
-  localCircularArenaAllocator<25432, uint16_t> ram_allocator;
-  localCircularArenaAllocator<896, uint16_t> metadata_allocator;
+  localCircularArenaAllocator<256, uint16_t> ram_allocator;
+  localCircularArenaAllocator<256, uint16_t> metadata_allocator;
 };
 
 #endif // __MY_MODEL_INTERFACE_H
