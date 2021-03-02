@@ -2,6 +2,8 @@
 .mbed
 projectfiles
 *.py*
+.idea
+.DS_Store
 
 # Do NOT ignore files below
 !dist/program.py
